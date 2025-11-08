@@ -1,10 +1,21 @@
 {
-  "config": {
-    "initialAmount": 5000,
-    "annualInterestRate": 8.5,
-    "startDate": "2024-01-01"
+  "version": "2.0.0",
+  "profiles": {
+    "default-profile-1": {
+      "id": "default-profile-1",
+      "name": "Alex",
+      "emoji": "👦",
+      "color": "#4ade80",
+      "config": {
+        "initialAmount": 5000,
+        "annualInterestRate": 8.5,
+        "startDate": "2024-01-01"
+      },
+      "transactions": [],
+      "createdAt": "2024-01-01T00:00:00Z",
+      "lastModified": "2024-01-01T00:00:00Z"
+    }
   },
-  "transactions": [],
-  "version": "1.0.0",
+  "activeProfileId": "default-profile-1",
   "lastModified": "2024-01-01T00:00:00Z"
 }
