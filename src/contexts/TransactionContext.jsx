@@ -24,6 +24,17 @@ export function TransactionProvider({ children }) {
         const baseline = await fetchBaselineData();
         const localData = loadFromLocalStorage();
         const merged = mergeData(baseline, localData);
+        
+        // Trim profile names to 50 characters if they exceed the limit
+        if (merged.profiles) {
+          Object.keys(merged.profiles).forEach(profileId => {
+            const profile = merged.profiles[profileId];
+            if (profile.name && profile.name.length > 50) {
+              merged.profiles[profileId].name = profile.name.substring(0, 50);
+            }
+          });
+        }
+        
         setData(merged);
       } catch (err) {
         setError(err.message);

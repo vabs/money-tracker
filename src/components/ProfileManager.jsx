@@ -26,10 +26,13 @@ export default function ProfileManager({ theme, onClose }) {
       return;
     }
 
+    // Trim name to 50 characters
+    const trimmedName = formData.name.trim().substring(0, 50);
+
     if (editingId) {
       // Update existing profile
       updateProfile(editingId, {
-        name: formData.name,
+        name: trimmedName,
         emoji: formData.emoji,
         config: {
           initialAmount: parseFloat(formData.initialAmount),
@@ -40,7 +43,7 @@ export default function ProfileManager({ theme, onClose }) {
       setEditingId(null);
     } else {
       // Add new profile
-      addProfile(formData.name, formData.emoji, {
+      addProfile(trimmedName, formData.emoji, {
         initialAmount: parseFloat(formData.initialAmount),
         annualInterestRate: parseFloat(formData.annualInterestRate),
         startDate: formData.startDate
@@ -59,8 +62,10 @@ export default function ProfileManager({ theme, onClose }) {
   };
 
   const handleEdit = (profile) => {
+    // Trim name to 50 characters when editing
+    const trimmedName = profile.name.substring(0, 50);
     setFormData({
-      name: profile.name,
+      name: trimmedName,
       emoji: profile.emoji,
       initialAmount: profile.config.initialAmount.toString(),
       annualInterestRate: profile.config.annualInterestRate.toString(),
@@ -174,7 +179,10 @@ export default function ProfileManager({ theme, onClose }) {
       fontSize: '18px',
       fontWeight: '700',
       color: theme.text,
-      marginBottom: '4px'
+      marginBottom: '4px',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap'
     },
     profileStats: {
       fontSize: '14px',
@@ -194,8 +202,24 @@ export default function ProfileManager({ theme, onClose }) {
       cursor: 'pointer',
       transition: 'all 0.2s ease',
       backgroundColor: variant === 'delete' ? '#fee2e2' : theme.accent + '40',
-      color: variant === 'delete' ? '#dc2626' : theme.text
+      color: variant === 'delete' ? '#dc2626' : theme.text,
+      minWidth: '36px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
     }),
+    actionButtonText: {
+      display: 'inline',
+      '@media (max-width: 640px)': {
+        display: 'none'
+      }
+    },
+    actionButtonIcon: {
+      display: 'none',
+      '@media (max-width: 640px)': {
+        display: 'inline'
+      }
+    },
     addButton: {
       width: '100%',
       padding: '16px',
@@ -305,7 +329,7 @@ export default function ProfileManager({ theme, onClose }) {
             >
               <div style={styles.profileEmoji}>{profile.emoji}</div>
               <div style={styles.profileInfo}>
-                <div style={styles.profileName}>{profile.name}</div>
+                <div style={styles.profileName}>{profile.name.substring(0, 50)}</div>
                 <div style={styles.profileStats}>
                   {formatCurrency(getProfileBalance(profile))} • {profile.transactions.length} transactions
                 </div>
@@ -316,8 +340,10 @@ export default function ProfileManager({ theme, onClose }) {
                   onClick={() => handleEdit(profile)}
                   onMouseOver={(e) => e.currentTarget.style.backgroundColor = theme.accent + '60'}
                   onMouseOut={(e) => e.currentTarget.style.backgroundColor = theme.accent + '40'}
+                  title="Edit profile"
                 >
-                  Edit
+                  <span className="action-text">Edit</span>
+                  <span className="action-icon">✏️</span>
                 </button>
                 <button
                   style={styles.actionButton('delete')}
@@ -329,8 +355,10 @@ export default function ProfileManager({ theme, onClose }) {
                     }
                   }}
                   onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#fee2e2'}
+                  title="Delete profile"
                 >
-                  Delete
+                  <span className="action-text">Delete</span>
+                  <span className="action-icon">🗑️</span>
                 </button>
               </div>
             </div>
@@ -339,13 +367,14 @@ export default function ProfileManager({ theme, onClose }) {
           {showAddForm ? (
             <form style={styles.form} onSubmit={handleSubmit}>
               <div style={styles.inputGroup}>
-                <label style={styles.label}>Name</label>
+                <label style={styles.label}>Name (max 50 characters)</label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Enter name"
                   style={styles.input}
+                  maxLength={50}
                   required
                 />
               </div>
@@ -426,6 +455,25 @@ export default function ProfileManager({ theme, onClose }) {
           )}
         </div>
       </div>
+
+      <style>{`
+        @media (min-width: 641px) {
+          .action-icon {
+            display: none !important;
+          }
+          .action-text {
+            display: inline !important;
+          }
+        }
+        @media (max-width: 640px) {
+          .action-icon {
+            display: inline !important;
+          }
+          .action-text {
+            display: none !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

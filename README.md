@@ -4,6 +4,8 @@ A beautiful, minimal web app that visualizes how money grows over time using com
 
 ## ✨ Features
 
+- **Multi-Profile Support**: Track money for multiple people (kids, family members) in one app
+- **Profile Management**: Create, edit, and switch between unlimited profiles with custom emojis
 - **Big Number Display**: Shows your current money value with the interest rate
 - **Interactive Growth Chart**: Visualize your money growth over different time periods (1M, 6M, 1Y, 5Y)
 - **Add/Withdraw Money**: Track additional contributions and withdrawals with compound growth
@@ -12,7 +14,7 @@ A beautiful, minimal web app that visualizes how money grows over time using com
 - **6 Pastel Themes**: Switch between beautiful pastel color themes with icon-based selection
 - **Export/Import**: Download your transaction data and sync across deployments
 - **localStorage Persistence**: Your changes persist across browser sessions
-- **Configurable**: Set initial amount, interest rate, and start date via configuration file
+- **Independent Configurations**: Each profile has its own initial amount, interest rate, and start date
 - **Static & Fast**: No backend required, perfect for GitHub Pages
 - **Responsive**: Works beautifully on desktop and mobile
 
@@ -50,25 +52,24 @@ Visit `http://localhost:5173` to see your app!
 
 ## ⚙️ Configuration
 
-The app can be configured using environment variables. Create a `.env` file in the root directory:
+### Profile-Based Configuration (Recommended)
+
+With v2.0.0, each profile has its own configuration. Edit `public/transactions.json` to set up your profiles with different initial amounts, interest rates, and start dates.
+
+### Environment Variables (Optional)
+
+You can still use environment variables for deployment settings:
 
 ```env
-# Initial amount in dollars
-VITE_INITIAL_AMOUNT=1000
-
-# Annual interest rate as a percentage
-VITE_ANNUAL_INTEREST_RATE=7
-
-# Start date in YYYY-MM-DD format
-VITE_START_DATE=2024-01-01
-
 # Base path for GitHub Pages (only needed if deploying to a subdirectory)
 VITE_BASE_PATH=/
 ```
 
 ### Default Values
 
-If no `.env` file is provided, the app uses these defaults:
+If no `transactions.json` file is found, the app creates a default profile:
+- **Name**: "Default"
+- **Emoji**: 👤
 - **Initial Amount**: $1,000
 - **Annual Interest Rate**: 7%
 - **Start Date**: 1 year ago from today
@@ -102,6 +103,48 @@ The pre-commit hook is powered by:
 - **Husky**: Git hooks made easy
 - **lint-staged**: Run linters on staged files only
 
+## 👥 Managing Profiles
+
+### Creating Profiles
+
+1. Click on the profile selector in the top-left corner
+2. Click "Manage Profiles" at the bottom of the dropdown
+3. Click "➕ Add New Profile"
+4. Configure the profile:
+   - **Name**: Enter the person's name (e.g., "Alex", "Emma")
+   - **Emoji**: Choose from 12 emoji options for visual identification
+   - **Initial Amount**: Starting balance in dollars
+   - **Annual Interest Rate**: Interest rate as a percentage
+   - **Start Date**: When the money tracking begins
+5. Click "Add Profile"
+
+### Switching Between Profiles
+
+1. Click the profile selector in the top-left corner (shows current profile)
+2. Select any profile from the dropdown
+3. All data (balance, transactions, chart) updates instantly
+
+### Editing Profiles
+
+1. Open Profile Manager (click profile selector → "Manage Profiles")
+2. Click "Edit" on any profile card
+3. Modify name, emoji, or configuration
+4. Click "Update Profile"
+
+### Deleting Profiles
+
+1. Open Profile Manager
+2. Click "Delete" on the profile you want to remove
+3. Confirm deletion (note: you cannot delete the last profile)
+
+### Profile Features
+
+- **Independent Data**: Each profile has separate transactions and configuration
+- **Visual Identity**: Emojis and colors help distinguish profiles quickly
+- **Profile Stats**: See balance and transaction count for each profile
+- **Active Indicator**: Current profile is highlighted with a checkmark
+- **Persistent Selection**: Your active profile is remembered across sessions
+
 ## 💵 Managing Transactions
 
 ### Adding Money or Withdrawals
@@ -120,12 +163,24 @@ The pre-commit hook is powered by:
 - **Visual Markers**: Dots appear on the chart where transactions occurred
 - **Real-time Updates**: The main display updates immediately
 
+### Exporting Data
+
+You can export your data in two ways:
+
+1. **Current Profile Only**: Click "Export" on the Manage Money page
+   - Downloads: `money-tracker-[profile-name].json`
+   - Contains: Only the selected profile's data
+
+2. **All Profiles**: Export from Profile Manager
+   - Downloads: `money-tracker-data.json`
+   - Contains: All profiles and their transactions
+
 ### Syncing Across Devices
 
 Since there's no backend, use this workflow to sync your data:
 
-1. **Export**: Click "Export" button on the Manage Money page
-2. **Save**: Download `transactions.json` file
+1. **Export**: Click "Export" button (current profile or all profiles)
+2. **Save**: Download the JSON file
 3. **Update Repo**: Replace `public/transactions.json` in your repository
 4. **Commit & Push**:
    ```bash
@@ -134,32 +189,64 @@ Since there's no backend, use this workflow to sync your data:
    git push
    ```
 5. **Redeploy**: Run `npm run deploy`
-6. **Done**: Your transactions are now in the deployed version
+6. **Done**: Your data is now in the deployed version
 
-### Data Structure
+### Data Structure (v2.0.0)
 
-The `public/transactions.json` file contains:
+The `public/transactions.json` file now uses a multi-profile structure:
 
 ```json
 {
-  "config": {
-    "initialAmount": 5000,
-    "annualInterestRate": 8.5,
-    "startDate": "2024-01-01"
-  },
-  "transactions": [
-    {
-      "id": "uuid",
-      "date": "2024-06-15",
-      "amount": 100,
-      "type": "addition",
-      "note": "Birthday gift"
+  "version": "2.0.0",
+  "profiles": {
+    "profile-id-1": {
+      "id": "profile-id-1",
+      "name": "Alex",
+      "emoji": "👦",
+      "color": "#4ade80",
+      "config": {
+        "initialAmount": 5000,
+        "annualInterestRate": 8.5,
+        "startDate": "2024-01-01"
+      },
+      "transactions": [
+        {
+          "id": "uuid",
+          "date": "2024-06-15",
+          "amount": 100,
+          "type": "addition",
+          "note": "Birthday gift",
+          "createdAt": "2024-06-15T10:00:00Z"
+        }
+      ],
+      "createdAt": "2024-01-01T00:00:00Z",
+      "lastModified": "2024-06-15T10:00:00Z"
+    },
+    "profile-id-2": {
+      "id": "profile-id-2",
+      "name": "Emma",
+      "emoji": "👧",
+      "color": "#f472b6",
+      "config": {
+        "initialAmount": 3000,
+        "annualInterestRate": 7.5,
+        "startDate": "2024-02-01"
+      },
+      "transactions": [],
+      "createdAt": "2024-02-01T00:00:00Z",
+      "lastModified": "2024-02-01T00:00:00Z"
     }
-  ],
-  "version": "1.0.0",
+  },
+  "activeProfileId": "profile-id-1",
   "lastModified": "2024-11-08T10:00:00Z"
 }
 ```
+
+**Key Changes from v1.0.0:**
+- Profiles are stored in a `profiles` object keyed by profile ID
+- Each profile has its own `config` and `transactions`
+- `activeProfileId` tracks which profile is currently selected
+- Each profile has visual identifiers: `name`, `emoji`, `color`
 
 ## 🌐 Deploying to GitHub Pages
 
@@ -277,21 +364,25 @@ Where:
 ```
 money-tracker/
 ├── public/
-│   └── transactions.json       # Baseline transaction data (committed)
+│   └── transactions.json       # Baseline data with profiles (v2.0.0)
 ├── src/
 │   ├── components/
 │   │   ├── MoneyDisplay.jsx    # Main number display
 │   │   ├── GrowthChart.jsx     # Chart with transaction markers
-│   │   └── ThemeSelector.jsx   # Icon-based theme switcher
+│   │   ├── ThemeSelector.jsx   # Icon-based theme switcher
+│   │   ├── ProfileSelector.jsx # Profile dropdown switcher
+│   │   └── ProfileManager.jsx  # Profile management modal
 │   ├── contexts/
-│   │   └── TransactionContext.jsx  # Transaction state management
+│   │   ├── TransactionContext.jsx  # Multi-profile state management
+│   │   └── transactionContext.js   # Context definition
+│   ├── hooks/
+│   │   └── useTransactions.js  # Hook to access transaction context
 │   ├── pages/
 │   │   ├── Home.jsx            # Main dashboard page
 │   │   └── ManageMoney.jsx     # Add/withdraw transactions page
 │   ├── utils/
 │   │   ├── calculations.js     # Compound interest with transactions
-│   │   └── storage.js          # localStorage & export/import
-│   ├── config.js               # App configuration (deprecated, use transactions.json)
+│   │   └── storage.js          # localStorage, export/import, profiles
 │   ├── themes.js               # Theme definitions with icons
 │   ├── App.jsx                 # Router setup
 │   ├── main.jsx                # Entry point
