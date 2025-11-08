@@ -6,8 +6,13 @@ A beautiful, minimal web app that visualizes how money grows over time using com
 
 - **Big Number Display**: Shows your current money value with the interest rate
 - **Interactive Growth Chart**: Visualize your money growth over different time periods (1M, 6M, 1Y, 5Y)
-- **6 Pastel Themes**: Switch between beautiful pastel color themes (Mint, Lavender, Peach, Sky, Rose, Lemon)
-- **Configurable**: Set initial amount, interest rate, and start date via environment variables
+- **Add/Withdraw Money**: Track additional contributions and withdrawals with compound growth
+- **Transaction History**: View and manage all your money transactions
+- **Transaction Markers**: See visual indicators on the chart where transactions occurred
+- **6 Pastel Themes**: Switch between beautiful pastel color themes with icon-based selection
+- **Export/Import**: Download your transaction data and sync across deployments
+- **localStorage Persistence**: Your changes persist across browser sessions
+- **Configurable**: Set initial amount, interest rate, and start date via configuration file
 - **Static & Fast**: No backend required, perfect for GitHub Pages
 - **Responsive**: Works beautifully on desktop and mobile
 
@@ -96,6 +101,65 @@ npm run lint
 The pre-commit hook is powered by:
 - **Husky**: Git hooks made easy
 - **lint-staged**: Run linters on staged files only
+
+## 💵 Managing Transactions
+
+### Adding Money or Withdrawals
+
+1. Click the 💰 button in the bottom-right corner
+2. Choose "Add Money" or "Withdraw"
+3. Enter amount (or use quick-add buttons: $5, $10, $20, $50, $100)
+4. Select the date (can be in the past)
+5. Optionally add a note
+6. Click "Add Transaction"
+
+### How It Works
+
+- **Compound Growth**: Each transaction grows with compound interest from its date
+- **localStorage**: Transactions are saved locally in your browser
+- **Visual Markers**: Dots appear on the chart where transactions occurred
+- **Real-time Updates**: The main display updates immediately
+
+### Syncing Across Devices
+
+Since there's no backend, use this workflow to sync your data:
+
+1. **Export**: Click "Export" button on the Manage Money page
+2. **Save**: Download `transactions.json` file
+3. **Update Repo**: Replace `public/transactions.json` in your repository
+4. **Commit & Push**:
+   ```bash
+   git add public/transactions.json
+   git commit -m "Update transactions"
+   git push
+   ```
+5. **Redeploy**: Run `npm run deploy`
+6. **Done**: Your transactions are now in the deployed version
+
+### Data Structure
+
+The `public/transactions.json` file contains:
+
+```json
+{
+  "config": {
+    "initialAmount": 5000,
+    "annualInterestRate": 8.5,
+    "startDate": "2024-01-01"
+  },
+  "transactions": [
+    {
+      "id": "uuid",
+      "date": "2024-06-15",
+      "amount": 100,
+      "type": "addition",
+      "note": "Birthday gift"
+    }
+  ],
+  "version": "1.0.0",
+  "lastModified": "2024-11-08T10:00:00Z"
+}
+```
 
 ## 🌐 Deploying to GitHub Pages
 
@@ -212,19 +276,29 @@ Where:
 
 ```
 money-tracker/
+├── public/
+│   └── transactions.json       # Baseline transaction data (committed)
 ├── src/
 │   ├── components/
 │   │   ├── MoneyDisplay.jsx    # Main number display
-│   │   ├── GrowthChart.jsx     # Chart component
-│   │   └── ThemeSelector.jsx   # Theme switcher
+│   │   ├── GrowthChart.jsx     # Chart with transaction markers
+│   │   └── ThemeSelector.jsx   # Icon-based theme switcher
+│   ├── contexts/
+│   │   └── TransactionContext.jsx  # Transaction state management
+│   ├── pages/
+│   │   ├── Home.jsx            # Main dashboard page
+│   │   └── ManageMoney.jsx     # Add/withdraw transactions page
 │   ├── utils/
-│   │   └── calculations.js     # Compound interest logic
-│   ├── config.js               # App configuration
-│   ├── themes.js               # Theme definitions
-│   ├── App.jsx                 # Main app component
+│   │   ├── calculations.js     # Compound interest with transactions
+│   │   └── storage.js          # localStorage & export/import
+│   ├── config.js               # App configuration (deprecated, use transactions.json)
+│   ├── themes.js               # Theme definitions with icons
+│   ├── App.jsx                 # Router setup
 │   ├── main.jsx                # Entry point
 │   └── index.css               # Global styles
 ├── .env.example                # Example environment variables
+├── .husky/                     # Git hooks
+│   └── pre-commit              # Lint staged files
 ├── vite.config.js              # Vite configuration
 └── package.json                # Dependencies and scripts
 ```

@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceDot } from 'recharts';
 import { generateGrowthData, getDaysForRange, formatCurrency } from '../utils/calculations';
-import { config } from '../config';
+import { useTransactions } from '../hooks/useTransactions';
 
 export default function GrowthChart({ theme, onClose }) {
+  const { config, transactions } = useTransactions();
   const [selectedRange, setSelectedRange] = useState('1Y');
   
   const timeRanges = ['1M', '6M', '1Y', '5Y'];
@@ -14,17 +15,23 @@ export default function GrowthChart({ theme, onClose }) {
       config.initialAmount,
       config.annualInterestRate,
       config.startDate,
-      days
+      days,
+      transactions
     );
     
     // Sample data points for better performance on large datasets
+    // But always keep points with transactions
     if (data.length > 100) {
       const step = Math.ceil(data.length / 100);
-      return data.filter((_, index) => index % step === 0 || index === data.length - 1);
+      return data.filter((item, index) => 
+        index % step === 0 || 
+        index === data.length - 1 || 
+        item.hasTransaction
+      );
     }
     
     return data;
-  }, [selectedRange]);
+  }, [selectedRange, config, transactions]);
 
   const styles = {
     overlay: {
@@ -188,6 +195,18 @@ export default function GrowthChart({ theme, onClose }) {
                 fill="url(#colorAmount)"
                 fillOpacity={1}
               />
+              {/* Transaction markers */}
+              {chartData.filter(d => d.hasTransaction).map((point, idx) => (
+                <ReferenceDot
+                  key={`tx-${idx}`}
+                  x={point.day}
+                  y={point.amount}
+                  r={6}
+                  fill={theme.accent}
+                  stroke={theme.text}
+                  strokeWidth={2}
+                />
+              ))}
             </AreaChart>
           </ResponsiveContainer>
         </div>

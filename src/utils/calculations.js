@@ -16,28 +16,59 @@ export function calculateCompoundInterest(principal, annualRate, days) {
 }
 
 /**
- * Generate day-by-day growth data
+ * Generate day-by-day growth data with transactions
  * @param {number} initialAmount - Starting amount
  * @param {number} annualRate - Annual interest rate as percentage
  * @param {string} startDate - Start date in YYYY-MM-DD format
  * @param {number} days - Number of days to generate
- * @returns {Array} Array of {date, amount, day} objects
+ * @param {Array} transactions - Array of transaction objects
+ * @returns {Array} Array of {date, amount, day, hasTransaction} objects
  */
-export function generateGrowthData(initialAmount, annualRate, startDate, days) {
+export function generateGrowthData(initialAmount, annualRate, startDate, days, transactions = []) {
   const data = [];
   const start = new Date(startDate);
   
   for (let i = 0; i <= days; i++) {
     const currentDate = new Date(start);
     currentDate.setDate(start.getDate() + i);
+    const currentDateStr = currentDate.toISOString().split('T')[0];
     
-    const amount = calculateCompoundInterest(initialAmount, annualRate, i);
+    // Calculate base amount from initial investment
+    const baseAmount = calculateCompoundInterest(initialAmount, annualRate, i);
+    
+    // Calculate contribution from transactions
+    let transactionAmount = 0;
+    const transactionsOnThisDay = [];
+    
+    transactions.forEach(tx => {
+      const txDate = new Date(tx.date);
+      if (txDate <= currentDate) {
+        // Calculate days this transaction has been growing
+        const daysGrowing = Math.floor((currentDate - txDate) / (1000 * 60 * 60 * 24));
+        const txValue = calculateCompoundInterest(tx.amount, annualRate, daysGrowing);
+        
+        if (tx.type === 'addition') {
+          transactionAmount += txValue;
+        } else if (tx.type === 'withdrawal') {
+          transactionAmount -= txValue;
+        }
+        
+        // Mark if transaction happened on this exact day
+        if (tx.date === currentDateStr) {
+          transactionsOnThisDay.push(tx);
+        }
+      }
+    });
+    
+    const totalAmount = baseAmount + transactionAmount;
     
     data.push({
-      date: currentDate.toISOString().split('T')[0],
-      amount: amount,
+      date: currentDateStr,
+      amount: totalAmount,
       day: i,
-      displayDate: currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      displayDate: currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      hasTransaction: transactionsOnThisDay.length > 0,
+      transactions: transactionsOnThisDay
     });
   }
   
@@ -60,13 +91,37 @@ export function getDaysForRange(range) {
 
 /**
  * Calculate the current value based on days elapsed since start date
+ * @param {number} initialAmount - Starting amount
+ * @param {number} annualRate - Annual interest rate as percentage
+ * @param {string} startDate - Start date in YYYY-MM-DD format
+ * @param {Array} transactions - Array of transaction objects
+ * @returns {number} Current total value
  */
-export function getCurrentValue(initialAmount, annualRate, startDate) {
+export function getCurrentValue(initialAmount, annualRate, startDate, transactions = []) {
   const start = new Date(startDate);
   const now = new Date();
   const daysPassed = Math.floor((now - start) / (1000 * 60 * 60 * 24));
   
-  return calculateCompoundInterest(initialAmount, annualRate, daysPassed);
+  // Calculate base amount
+  const baseAmount = calculateCompoundInterest(initialAmount, annualRate, daysPassed);
+  
+  // Calculate contribution from transactions
+  let transactionAmount = 0;
+  transactions.forEach(tx => {
+    const txDate = new Date(tx.date);
+    if (txDate <= now) {
+      const daysGrowing = Math.floor((now - txDate) / (1000 * 60 * 60 * 24));
+      const txValue = calculateCompoundInterest(tx.amount, annualRate, daysGrowing);
+      
+      if (tx.type === 'addition') {
+        transactionAmount += txValue;
+      } else if (tx.type === 'withdrawal') {
+        transactionAmount -= txValue;
+      }
+    }
+  });
+  
+  return baseAmount + transactionAmount;
 }
 
 /**

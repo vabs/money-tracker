@@ -1,0 +1,10 @@
+{
+  "config": {
+    "initialAmount": 5000,
+    "annualInterestRate": 8.5,
+    "startDate": "2024-01-01"
+  },
+  "transactions": [],
+  "version": "1.0.0",
+  "lastModified": "2024-01-01T00:00:00Z"
+}
