@@ -84,6 +84,19 @@ Preview the production build locally:
 npm run preview
 ```
 
+## 🔍 Code Quality
+
+The project includes a pre-commit hook that automatically runs ESLint on staged files before each commit. This ensures code quality and consistency.
+
+**Manual linting:**
+```bash
+npm run lint
+```
+
+The pre-commit hook is powered by:
+- **Husky**: Git hooks made easy
+- **lint-staged**: Run linters on staged files only
+
 ## 🌐 Deploying to GitHub Pages
 
 ### Option 1: Using the Deploy Script
