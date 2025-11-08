@@ -3,11 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { useTransactions } from '../hooks/useTransactions';
 import { formatCurrency, getCurrentValue } from '../utils/calculations';
 import { themes, defaultTheme } from '../themes';
+import ProfileSelector from '../components/ProfileSelector';
+import ProfileManager from '../components/ProfileManager';
 
 export default function ManageMoney() {
   const navigate = useNavigate();
-  const { config, transactions, addTransaction, deleteTransaction, exportData } = useTransactions();
-  const [currentTheme] = useState(defaultTheme);
+  const { config, transactions, addTransaction, deleteTransaction, exportData, currentProfile } = useTransactions();
+  const [currentTheme] = useState(() => {
+    const saved = localStorage.getItem('money-tracker-theme');
+    return saved || defaultTheme;
+  });
+  const [showProfileManager, setShowProfileManager] = useState(false);
   const [amount, setAmount] = useState('');
   const [type, setType] = useState('addition');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -219,14 +225,22 @@ export default function ManageMoney() {
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <button
-          style={styles.backButton}
-          onClick={() => navigate('/')}
-          title="Back to Home"
-        >
-          ← Back
-        </button>
-        <h1 style={styles.title}>Manage Money</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
+          <button
+            style={styles.backButton}
+            onClick={() => navigate('/')}
+            title="Back to Home"
+          >
+            ← Back
+          </button>
+          <ProfileSelector
+            theme={theme}
+            onManageClick={() => setShowProfileManager(true)}
+          />
+        </div>
+        <h1 style={styles.title}>
+          Manage Money {currentProfile && `- ${currentProfile.emoji} ${currentProfile.name}`}
+        </h1>
       </div>
 
       <form style={styles.form} onSubmit={handleSubmit}>
@@ -343,11 +357,18 @@ export default function ManageMoney() {
 
       <button
         style={styles.exportButton}
-        onClick={exportData}
-        title="Export transactions.json"
+        onClick={() => exportData(true)}
+        title="Export current profile data"
       >
         📥 Export
       </button>
+
+      {showProfileManager && (
+        <ProfileManager
+          theme={theme}
+          onClose={() => setShowProfileManager(false)}
+        />
+      )}
     </div>
   );
 }

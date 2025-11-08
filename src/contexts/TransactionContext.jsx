@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { 
-  fetchBaselineTransactions, 
+  fetchBaselineData, 
   loadFromLocalStorage, 
   saveToLocalStorage, 
-  mergeTransactions,
-  exportTransactions,
-  clearLocalStorage
+  mergeData,
+  exportData as exportDataUtil,
+  clearLocalStorage,
+  getActiveProfile,
+  createProfile as createProfileUtil
 } from '../utils/storage';
 import { TransactionContext } from './transactionContext';
 
@@ -19,13 +21,13 @@ export function TransactionProvider({ children }) {
     async function loadData() {
       try {
         setLoading(true);
-        const baseline = await fetchBaselineTransactions();
+        const baseline = await fetchBaselineData();
         const localData = loadFromLocalStorage();
-        const merged = mergeTransactions(baseline, localData);
+        const merged = mergeData(baseline, localData);
         setData(merged);
       } catch (err) {
         setError(err.message);
-        console.error('Error loading transactions:', err);
+        console.error('Error loading data:', err);
       } finally {
         setLoading(false);
       }
@@ -33,8 +35,114 @@ export function TransactionProvider({ children }) {
     loadData();
   }, []);
 
-  // Add transaction
+  // Get current active profile
+  const currentProfile = data ? getActiveProfile(data) : null;
+
+  // Switch active profile
+  const switchProfile = (profileId) => {
+    if (!data || !data.profiles || !data.profiles[profileId]) {
+      console.error('Profile not found:', profileId);
+      return false;
+    }
+
+    const updatedData = {
+      ...data,
+      activeProfileId: profileId,
+      lastModified: new Date().toISOString()
+    };
+
+    setData(updatedData);
+    saveToLocalStorage(updatedData);
+    return true;
+  };
+
+  // Add new profile
+  const addProfile = (name, emoji, config) => {
+    const newProfile = createProfileUtil(name, emoji, config);
+    
+    const updatedData = {
+      ...data,
+      profiles: {
+        ...data.profiles,
+        [newProfile.id]: newProfile
+      },
+      activeProfileId: newProfile.id, // Switch to new profile
+      lastModified: new Date().toISOString()
+    };
+
+    setData(updatedData);
+    saveToLocalStorage(updatedData);
+    return newProfile.id;
+  };
+
+  // Update profile config
+  const updateProfile = (profileId, updates) => {
+    if (!data || !data.profiles || !data.profiles[profileId]) {
+      console.error('Profile not found:', profileId);
+      return false;
+    }
+
+    const updatedProfile = {
+      ...data.profiles[profileId],
+      ...updates,
+      lastModified: new Date().toISOString()
+    };
+
+    const updatedData = {
+      ...data,
+      profiles: {
+        ...data.profiles,
+        [profileId]: updatedProfile
+      },
+      lastModified: new Date().toISOString()
+    };
+
+    setData(updatedData);
+    saveToLocalStorage(updatedData);
+    return true;
+  };
+
+  // Delete profile
+  const deleteProfile = (profileId) => {
+    if (!data || !data.profiles || !data.profiles[profileId]) {
+      console.error('Profile not found:', profileId);
+      return false;
+    }
+
+    // Prevent deleting the last profile
+    const profileIds = Object.keys(data.profiles);
+    if (profileIds.length === 1) {
+      console.error('Cannot delete the last profile');
+      return false;
+    }
+
+    // Remove the profile
+    const { [profileId]: _removed, ...remainingProfiles } = data.profiles;
+
+    // If deleting active profile, switch to first remaining profile
+    const newActiveProfileId = data.activeProfileId === profileId
+      ? Object.keys(remainingProfiles)[0]
+      : data.activeProfileId;
+
+    const updatedData = {
+      ...data,
+      profiles: remainingProfiles,
+      activeProfileId: newActiveProfileId,
+      lastModified: new Date().toISOString()
+    };
+
+    setData(updatedData);
+    saveToLocalStorage(updatedData);
+    return true;
+  };
+
+  // Add transaction to current profile
   const addTransaction = (transaction) => {
+    if (!currentProfile) {
+      console.error('No active profile');
+      return;
+    }
+
     const newTransaction = {
       id: crypto.randomUUID(),
       date: transaction.date || new Date().toISOString().split('T')[0],
@@ -44,9 +152,18 @@ export function TransactionProvider({ children }) {
       createdAt: new Date().toISOString()
     };
 
+    const updatedProfile = {
+      ...currentProfile,
+      transactions: [...(currentProfile.transactions || []), newTransaction],
+      lastModified: new Date().toISOString()
+    };
+
     const updatedData = {
       ...data,
-      transactions: [...(data.transactions || []), newTransaction],
+      profiles: {
+        ...data.profiles,
+        [currentProfile.id]: updatedProfile
+      },
       lastModified: new Date().toISOString()
     };
 
@@ -54,11 +171,25 @@ export function TransactionProvider({ children }) {
     saveToLocalStorage(updatedData);
   };
 
-  // Delete transaction
+  // Delete transaction from current profile
   const deleteTransaction = (id) => {
+    if (!currentProfile) {
+      console.error('No active profile');
+      return;
+    }
+
+    const updatedProfile = {
+      ...currentProfile,
+      transactions: currentProfile.transactions.filter(t => t.id !== id),
+      lastModified: new Date().toISOString()
+    };
+
     const updatedData = {
       ...data,
-      transactions: data.transactions.filter(t => t.id !== id),
+      profiles: {
+        ...data.profiles,
+        [currentProfile.id]: updatedProfile
+      },
       lastModified: new Date().toISOString()
     };
 
@@ -66,10 +197,11 @@ export function TransactionProvider({ children }) {
     saveToLocalStorage(updatedData);
   };
 
-  // Export data
-  const exportData = () => {
+  // Export data (all profiles or current profile only)
+  const exportData = (currentProfileOnly = false) => {
     if (data) {
-      exportTransactions(data);
+      const profileId = currentProfileOnly && currentProfile ? currentProfile.id : null;
+      exportDataUtil(data, profileId);
     }
   };
 
@@ -88,7 +220,7 @@ export function TransactionProvider({ children }) {
   // Reset to baseline (clear localStorage)
   const resetToBaseline = async () => {
     clearLocalStorage();
-    const baseline = await fetchBaselineTransactions();
+    const baseline = await fetchBaselineData();
     setData(baseline);
   };
 
@@ -96,13 +228,21 @@ export function TransactionProvider({ children }) {
     data,
     loading,
     error,
+    profiles: data?.profiles || {},
+    activeProfileId: data?.activeProfileId,
+    currentProfile,
+    switchProfile,
+    addProfile,
+    updateProfile,
+    deleteProfile,
     addTransaction,
     deleteTransaction,
     exportData,
     importData,
     resetToBaseline,
-    config: data?.config || {},
-    transactions: data?.transactions || []
+    // Legacy support - expose current profile's config and transactions
+    config: currentProfile?.config || {},
+    transactions: currentProfile?.transactions || []
   };
 
   return (

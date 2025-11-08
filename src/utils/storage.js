@@ -1,7 +1,7 @@
-const STORAGE_KEY = 'money-tracker-transactions';
+const STORAGE_KEY = 'money-tracker-v2';
 
 /**
- * Load transactions from localStorage
+ * Load all profiles data from localStorage
  */
 export function loadFromLocalStorage() {
   try {
@@ -14,11 +14,11 @@ export function loadFromLocalStorage() {
 }
 
 /**
- * Save transactions to localStorage
+ * Save all profiles data to localStorage
  */
-export function saveToLocalStorage(transactions) {
+export function saveToLocalStorage(data) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     return true;
   } catch (error) {
     console.error('Error saving to localStorage:', error);
@@ -40,11 +40,10 @@ export function clearLocalStorage() {
 }
 
 /**
- * Fetch baseline transactions from public folder
+ * Fetch baseline data from public folder
  */
-export async function fetchBaselineTransactions() {
+export async function fetchBaselineData() {
   try {
-    // Use import.meta.env.BASE_URL to handle different base paths
     const basePath = import.meta.env.BASE_URL || '/';
     const url = `${basePath}transactions.json`.replace('//', '/');
     const response = await fetch(url);
@@ -53,65 +52,108 @@ export async function fetchBaselineTransactions() {
     }
     return await response.json();
   } catch (error) {
-    console.error('Error fetching baseline transactions:', error);
-    // Return default structure if file doesn't exist
+    console.error('Error fetching baseline data:', error);
+    // Return default structure with one default profile
+    const defaultProfileId = crypto.randomUUID();
     return {
-      config: {
-        initialAmount: 1000,
-        annualInterestRate: 7,
-        startDate: new Date(new Date().setFullYear(new Date().getFullYear() - 1)).toISOString().split('T')[0]
+      version: '2.0.0',
+      profiles: {
+        [defaultProfileId]: {
+          id: defaultProfileId,
+          name: 'Default',
+          emoji: '👤',
+          color: '#4ade80',
+          config: {
+            initialAmount: 1000,
+            annualInterestRate: 7,
+            startDate: new Date(new Date().setFullYear(new Date().getFullYear() - 1)).toISOString().split('T')[0]
+          },
+          transactions: [],
+          createdAt: new Date().toISOString(),
+          lastModified: new Date().toISOString()
+        }
       },
-      transactions: [],
-      version: '1.0.0',
+      activeProfileId: defaultProfileId,
       lastModified: new Date().toISOString()
     };
   }
 }
 
 /**
- * Merge baseline and localStorage transactions
- * localStorage transactions take precedence
+ * Merge baseline and localStorage data
+ * localStorage data takes precedence
  */
-export function mergeTransactions(baseline, localData) {
+export function mergeData(baseline, localData) {
   if (!localData) {
     return baseline;
   }
 
-  // Merge: Start with baseline transactions, then add/override with local ones
-  const baselineTransactions = baseline.transactions || [];
-  const mergedTransactions = [...baselineTransactions];
-
-  // Add local transactions that aren't in baseline
-  localData.transactions?.forEach(localTx => {
-    const existingIndex = mergedTransactions.findIndex(t => t.id === localTx.id);
-    if (existingIndex === -1) {
-      mergedTransactions.push(localTx);
-    } else {
-      // Override baseline with local version
-      mergedTransactions[existingIndex] = localTx;
-    }
-  });
-
-  // Sort by date
-  mergedTransactions.sort((a, b) => new Date(a.date) - new Date(b.date));
-
+  // Use local data if it exists, otherwise use baseline
   return {
     ...baseline,
-    transactions: mergedTransactions,
+    ...localData,
     lastModified: new Date().toISOString()
   };
 }
 
 /**
- * Export transactions as JSON file
+ * Get active profile from data
  */
-export function exportTransactions(data) {
-  const jsonString = JSON.stringify(data, null, 2);
+export function getActiveProfile(data) {
+  if (!data || !data.profiles || !data.activeProfileId) {
+    return null;
+  }
+  return data.profiles[data.activeProfileId] || null;
+}
+
+/**
+ * Create a new profile
+ */
+export function createProfile(name, emoji, config) {
+  const profileId = crypto.randomUUID();
+  return {
+    id: profileId,
+    name,
+    emoji,
+    color: '#4ade80', // Default color, can be customized
+    config: {
+      initialAmount: config.initialAmount || 1000,
+      annualInterestRate: config.annualInterestRate || 7,
+      startDate: config.startDate || new Date().toISOString().split('T')[0]
+    },
+    transactions: [],
+    createdAt: new Date().toISOString(),
+    lastModified: new Date().toISOString()
+  };
+}
+
+/**
+ * Export data as JSON file
+ */
+export function exportData(data, profileId = null) {
+  let exportData = data;
+  let filename = 'money-tracker-data.json';
+  
+  // If profileId is provided, export only that profile
+  if (profileId && data.profiles && data.profiles[profileId]) {
+    const profile = data.profiles[profileId];
+    exportData = {
+      version: '2.0.0',
+      profiles: {
+        [profileId]: profile
+      },
+      activeProfileId: profileId,
+      lastModified: new Date().toISOString()
+    };
+    filename = `money-tracker-${profile.name.toLowerCase().replace(/\s+/g, '-')}.json`;
+  }
+  
+  const jsonString = JSON.stringify(exportData, null, 2);
   const blob = new Blob([jsonString], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = 'transactions.json';
+  link.download = filename;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

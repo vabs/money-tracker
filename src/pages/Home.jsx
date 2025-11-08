@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import MoneyDisplay from '../components/MoneyDisplay';
 import GrowthChart from '../components/GrowthChart';
 import ThemeSelector from '../components/ThemeSelector';
+import ProfileSelector from '../components/ProfileSelector';
+import ProfileManager from '../components/ProfileManager';
 import { getCurrentValue } from '../utils/calculations';
 import { useTransactions } from '../hooks/useTransactions';
 import { themes, defaultTheme } from '../themes';
@@ -10,9 +12,19 @@ import { themes, defaultTheme } from '../themes';
 export default function Home() {
   const navigate = useNavigate();
   const { config, transactions } = useTransactions();
-  const [currentTheme, setCurrentTheme] = useState(defaultTheme);
+  const [currentTheme, setCurrentTheme] = useState(() => {
+    const saved = localStorage.getItem('money-tracker-theme');
+    return saved || defaultTheme;
+  });
   const [showChart, setShowChart] = useState(false);
+  const [showProfileManager, setShowProfileManager] = useState(false);
   const [currentAmount, setCurrentAmount] = useState(0);
+
+  // Save theme to localStorage when it changes
+  const handleThemeChange = (newTheme) => {
+    setCurrentTheme(newTheme);
+    localStorage.setItem('money-tracker-theme', newTheme);
+  };
 
   useEffect(() => {
     if (config.initialAmount) {
@@ -35,9 +47,23 @@ export default function Home() {
       transition: 'background-color 0.3s ease',
       position: 'relative'
     }}>
+      {/* Profile Selector - Top Left */}
+      <div style={{
+        position: 'absolute',
+        top: '20px',
+        left: '20px',
+        zIndex: 1000
+      }}>
+        <ProfileSelector
+          theme={theme}
+          onManageClick={() => setShowProfileManager(true)}
+        />
+      </div>
+
+      {/* Theme Selector - Top Right */}
       <ThemeSelector
         currentTheme={currentTheme}
-        onThemeChange={setCurrentTheme}
+        onThemeChange={handleThemeChange}
       />
       
       <MoneyDisplay
@@ -82,6 +108,13 @@ export default function Home() {
         <GrowthChart
           theme={theme}
           onClose={() => setShowChart(false)}
+        />
+      )}
+
+      {showProfileManager && (
+        <ProfileManager
+          theme={theme}
+          onClose={() => setShowProfileManager(false)}
         />
       )}
     </div>
