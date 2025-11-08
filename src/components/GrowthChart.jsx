@@ -184,7 +184,7 @@ export default function GrowthChart({ theme, onClose }) {
                 stroke={theme.text}
                 opacity={0.6}
                 tickFormatter={(value) => `$${(value / 1000).toFixed(1)}k`}
-                label={{ value: 'Amount', angle: -90, position: 'insideLeft', offset: 10, fill: theme.text, fontWeight: 'bold', fontSize: 14 }}
+                label={{ value: 'Amount', angle: -90, position: 'insideLeft', offset: -5, fill: theme.text, fontWeight: 'bold', fontSize: 14 }}
               />
               <Tooltip content={<CustomTooltip />} />
               <Area
