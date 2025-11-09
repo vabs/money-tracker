@@ -191,6 +191,7 @@ export default function ProfileManager({ theme, onClose }) {
     },
     profileActions: {
       display: 'flex',
+      flexDirection: 'column',
       gap: '8px'
     },
     actionButton: (variant = 'default') => ({
