@@ -2,6 +2,24 @@
 
 An educational web app designed to teach kids about financial literacy, compound interest, and money management. This interactive tool helps children visualize how their money grows over time, understand interest rates, and track their earnings and expenses in a fun, engaging way.
 
+## Screenshots
+
+### Home Page (theme: Mint)
+<img width="1790" height="934" alt="s-home-page" src="https://github.com/user-attachments/assets/522677f0-b469-43b1-9f69-573e3596cfc7" />
+
+### Growth Graph (theme: Rose)
+<img width="1048" height="660" alt="s-graph" src="https://github.com/user-attachments/assets/bc956458-5e52-4718-9099-ce3a1d64d4cc" />
+
+
+### Profile Management (theme: Lavender)
+<img width="632" height="890" alt="s-managing-profile" src="https://github.com/user-attachments/assets/9fa71617-6d4d-4871-90db-ef73032b7ccb" />
+
+### Transactions Management (theme: Lime)
+<img width="682" height="695" alt="s-manage-transactions" src="https://github.com/user-attachments/assets/ce533bea-7246-4b81-a02c-0f6bb48e368a" />
+
+
+
+
 ## ✨ Features
 
 ### Educational Benefits
