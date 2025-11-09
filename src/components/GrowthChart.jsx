@@ -2,9 +2,11 @@ import { useState, useMemo } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceDot } from 'recharts';
 import { generateGrowthData, getDaysForRange, formatCurrency } from '../utils/calculations';
 import { useTransactions } from '../hooks/useTransactions';
+import { useTheme } from '../hooks/useTheme';
 
-export default function GrowthChart({ theme, onClose }) {
+export default function GrowthChart({ onClose }) {
   const { config, transactions } = useTransactions();
+  const { theme } = useTheme();
   const [selectedRange, setSelectedRange] = useState('1Y');
   
   const timeRanges = ['1M', '6M', '1Y', '5Y'];

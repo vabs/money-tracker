@@ -7,24 +7,15 @@ import ProfileSelector from '../components/ProfileSelector';
 import ProfileManager from '../components/ProfileManager';
 import { getCurrentValue } from '../utils/calculations';
 import { useTransactions } from '../hooks/useTransactions';
-import { themes, defaultTheme } from '../themes';
+import { useTheme } from '../hooks/useTheme';
 
 export default function Home() {
   const navigate = useNavigate();
   const { config, transactions } = useTransactions();
-  const [currentTheme, setCurrentTheme] = useState(() => {
-    const saved = localStorage.getItem('money-tracker-theme');
-    return saved || defaultTheme;
-  });
+  const { theme } = useTheme();
   const [showChart, setShowChart] = useState(false);
   const [showProfileManager, setShowProfileManager] = useState(false);
   const [currentAmount, setCurrentAmount] = useState(0);
-
-  // Save theme to localStorage when it changes
-  const handleThemeChange = (newTheme) => {
-    setCurrentTheme(newTheme);
-    localStorage.setItem('money-tracker-theme', newTheme);
-  };
 
   useEffect(() => {
     if (config.initialAmount) {
@@ -37,8 +28,6 @@ export default function Home() {
       setCurrentAmount(amount);
     }
   }, [config, transactions]);
-
-  const theme = themes[currentTheme];
 
   return (
     <div style={{
@@ -54,22 +43,15 @@ export default function Home() {
         left: '20px',
         zIndex: 1000
       }}>
-        <ProfileSelector
-          theme={theme}
-          onManageClick={() => setShowProfileManager(true)}
-        />
+        <ProfileSelector onManageClick={() => setShowProfileManager(true)} />
       </div>
 
       {/* Theme Selector - Top Right */}
-      <ThemeSelector
-        currentTheme={currentTheme}
-        onThemeChange={handleThemeChange}
-      />
+      <ThemeSelector />
       
       <MoneyDisplay
         amount={currentAmount}
         interestRate={config.annualInterestRate}
-        theme={theme}
         onGraphClick={() => setShowChart(true)}
       />
 
@@ -105,17 +87,11 @@ export default function Home() {
       </button>
 
       {showChart && (
-        <GrowthChart
-          theme={theme}
-          onClose={() => setShowChart(false)}
-        />
+        <GrowthChart onClose={() => setShowChart(false)} />
       )}
 
       {showProfileManager && (
-        <ProfileManager
-          theme={theme}
-          onClose={() => setShowProfileManager(false)}
-        />
+        <ProfileManager onClose={() => setShowProfileManager(false)} />
       )}
     </div>
   );

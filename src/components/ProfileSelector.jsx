@@ -1,10 +1,17 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useTransactions } from '../hooks/useTransactions';
+import { useTheme } from '../hooks/useTheme';
 
-export default function ProfileSelector({ theme, onManageClick }) {
+export default function ProfileSelector({ onManageClick }) {
   const { profiles, activeProfileId, currentProfile, switchProfile } = useTransactions();
+  const { theme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
+  const [focusedIndex, setFocusedIndex] = useState(null);
   const dropdownRef = useRef(null);
+  const toggleButtonRef = useRef(null);
+  const profileRefs = useRef([]);
+
+  const profileList = useMemo(() => Object.values(profiles), [profiles]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -20,11 +27,65 @@ export default function ProfileSelector({ theme, onManageClick }) {
     }
   }, [isOpen]);
 
-  const profileList = Object.values(profiles);
+  useEffect(() => {
+    if (isOpen) {
+      const activeIndex = profileList.findIndex((profile) => profile.id === activeProfileId);
+      setFocusedIndex(activeIndex >= 0 ? activeIndex : 0);
+    } else {
+      setFocusedIndex(null);
+    }
+  }, [isOpen, profileList, activeProfileId]);
+
+  useEffect(() => {
+    profileRefs.current = profileRefs.current.slice(0, profileList.length);
+  }, [profileList]);
+
+  useEffect(() => {
+    if (isOpen && focusedIndex !== null) {
+      profileRefs.current[focusedIndex]?.focus();
+    }
+  }, [isOpen, focusedIndex]);
 
   const handleProfileSelect = (profileId) => {
     switchProfile(profileId);
     setIsOpen(false);
+    toggleButtonRef.current?.focus();
+  };
+
+  const handleManageButtonClick = () => {
+    setIsOpen(false);
+    if (onManageClick) {
+      onManageClick();
+    }
+  };
+
+  const handleListKeyDown = (event) => {
+    if (!isOpen) return;
+    if (profileList.length === 0) return;
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setFocusedIndex((prev) => {
+        if (prev === null) return 0;
+        return (prev + 1) % profileList.length;
+      });
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      setFocusedIndex((prev) => {
+        if (prev === null) return 0;
+        return (prev - 1 + profileList.length) % profileList.length;
+      });
+    } else if (event.key === 'Home') {
+      event.preventDefault();
+      setFocusedIndex(0);
+    } else if (event.key === 'End') {
+      event.preventDefault();
+      setFocusedIndex(profileList.length - 1);
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      setIsOpen(false);
+      toggleButtonRef.current?.focus();
+    }
   };
 
   const styles = {
@@ -52,7 +113,7 @@ export default function ProfileSelector({ theme, onManageClick }) {
       position: 'absolute',
       top: 'calc(100% + 8px)',
       left: 0,
-      minWidth: '200px',
+      minWidth: '220px',
       backgroundColor: theme.background,
       border: `2px solid ${theme.accent}`,
       borderRadius: '12px',
@@ -65,11 +126,14 @@ export default function ProfileSelector({ theme, onManageClick }) {
       alignItems: 'center',
       gap: '12px',
       padding: '12px 16px',
-      cursor: 'pointer',
+      width: '100%',
+      border: 'none',
       backgroundColor: isActive ? theme.accent + '20' : 'transparent',
       borderLeft: isActive ? `4px solid ${theme.accent}` : '4px solid transparent',
       transition: 'all 0.2s ease',
-      color: theme.text
+      color: theme.text,
+      textAlign: 'left',
+      cursor: 'pointer'
     }),
     profileEmoji: {
       fontSize: '20px'
@@ -100,8 +164,7 @@ export default function ProfileSelector({ theme, onManageClick }) {
       fontSize: '14px',
       fontWeight: '600',
       border: 'none',
-      width: '100%',
-      transition: 'all 0.2s ease'
+      width: '100%'
     }
   };
 
@@ -112,16 +175,11 @@ export default function ProfileSelector({ theme, onManageClick }) {
   return (
     <div style={styles.container} ref={dropdownRef}>
       <button
+        ref={toggleButtonRef}
         style={styles.button}
-        onClick={() => setIsOpen(!isOpen)}
-        onMouseOver={(e) => {
-          e.currentTarget.style.transform = 'translateY(-2px)';
-          e.currentTarget.style.boxShadow = `0 4px 12px ${theme.accent}60`;
-        }}
-        onMouseOut={(e) => {
-          e.currentTarget.style.transform = 'translateY(0)';
-          e.currentTarget.style.boxShadow = `0 2px 8px ${theme.accent}40`;
-        }}
+        onClick={() => setIsOpen((prev) => !prev)}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
       >
         <span style={styles.profileEmoji}>{currentProfile.emoji}</span>
         <span>{currentProfile.name}</span>
@@ -129,47 +187,43 @@ export default function ProfileSelector({ theme, onManageClick }) {
       </button>
 
       {isOpen && (
-        <div style={styles.dropdown}>
-          {profileList.map((profile) => (
-            <div
+        <div
+          style={styles.dropdown}
+          role="listbox"
+          aria-activedescendant={focusedIndex !== null ? `profile-option-${profileList[focusedIndex]?.id}` : undefined}
+          tabIndex={-1}
+          onKeyDown={handleListKeyDown}
+        >
+          {profileList.map((profile, index) => (
+            <button
               key={profile.id}
+              id={`profile-option-${profile.id}`}
+              type="button"
+              className="profile-selector-option"
+              ref={(el) => {
+                profileRefs.current[index] = el;
+              }}
               style={styles.profileItem(profile.id === activeProfileId)}
+              role="option"
+              aria-selected={profile.id === activeProfileId}
               onClick={() => handleProfileSelect(profile.id)}
-              onMouseOver={(e) => {
-                if (profile.id !== activeProfileId) {
-                  e.currentTarget.style.backgroundColor = theme.accent + '10';
-                }
-              }}
-              onMouseOut={(e) => {
-                if (profile.id !== activeProfileId) {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }
-              }}
             >
               <span style={styles.profileEmoji}>{profile.emoji}</span>
               <span style={styles.profileName}>{profile.name}</span>
               {profile.id === activeProfileId && (
                 <span style={styles.checkmark}>✓</span>
               )}
-            </div>
+            </button>
           ))}
-          
+
           <div style={styles.divider} />
-          
+
           <button
+            type="button"
             style={styles.manageButton}
-            onClick={() => {
-              setIsOpen(false);
-              onManageClick();
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.backgroundColor = theme.accent + '10';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-            }}
+            onClick={handleManageButtonClick}
           >
-            <span>⚙️</span>
+            <span aria-hidden="true">⚙️</span>
             <span>Manage Profiles</span>
           </button>
         </div>
@@ -185,6 +239,10 @@ export default function ProfileSelector({ theme, onManageClick }) {
             opacity: 1;
             transform: translateY(0);
           }
+        }
+        .profile-selector-option:focus-visible {
+          outline: 3px solid ${theme.accent};
+          outline-offset: 2px;
         }
       `}</style>
     </div>

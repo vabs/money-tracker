@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { themes } from '../themes';
+import { useTheme } from '../hooks/useTheme';
 
-export default function ThemeSelector({ currentTheme, onThemeChange }) {
+export default function ThemeSelector() {
+  const { themeKey: currentTheme, theme: activeTheme, setTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -27,21 +29,21 @@ export default function ThemeSelector({ currentTheme, onThemeChange }) {
       zIndex: 1000
     },
     buttonWrapper: {
-      backgroundColor: themes[currentTheme].background,
+      backgroundColor: activeTheme.background,
       padding: '8px',
       borderRadius: '12px',
-      border: `2px solid ${themes[currentTheme].accent}`,
-      boxShadow: `0 4px 12px ${themes[currentTheme].accent}40`
+      border: `2px solid ${activeTheme.accent}`,
+      boxShadow: `0 4px 12px ${activeTheme.accent}40`
     },
     dropdown: {
       position: 'absolute',
       top: 'calc(100% + 8px)',
       right: 0,
-      backgroundColor: themes[currentTheme].background,
+      backgroundColor: activeTheme.background,
       padding: '8px',
       borderRadius: '12px',
-      border: `2px solid ${themes[currentTheme].accent}`,
-      boxShadow: `0 4px 16px ${themes[currentTheme].accent}60`,
+      border: `2px solid ${activeTheme.accent}`,
+      boxShadow: `0 4px 16px ${activeTheme.accent}60`,
       display: 'flex',
       flexDirection: 'column',
       gap: '8px',
@@ -51,8 +53,8 @@ export default function ThemeSelector({ currentTheme, onThemeChange }) {
       width: '40px',
       height: '40px',
       borderRadius: '8px',
-      border: `3px solid ${themes[currentTheme].accent}`,
-      backgroundColor: themes[currentTheme].accent + '40',
+      border: `3px solid ${activeTheme.accent}`,
+      backgroundColor: activeTheme.accent + '40',
       cursor: 'pointer',
       fontSize: '20px',
       display: 'flex',
@@ -61,16 +63,15 @@ export default function ThemeSelector({ currentTheme, onThemeChange }) {
       transition: 'all 0.2s ease',
       outline: 'none'
     },
-    button: (themeKey) => ({
-      width: '40px',
-      height: '40px',
-      borderRadius: '8px',
-      border: currentTheme === themeKey 
-        ? `3px solid ${themes[currentTheme].accent}` 
-        : '2px solid transparent',
-      backgroundColor: currentTheme === themeKey 
-        ? themes[themeKey].accent + '40' 
-        : 'transparent',
+    button: (themeKey) => {
+      const optionTheme = themes[themeKey];
+      const isActive = currentTheme === themeKey;
+      return {
+        width: '40px',
+        height: '40px',
+        borderRadius: '8px',
+      border: isActive ? `3px solid ${optionTheme.accent}` : '2px solid transparent',
+      backgroundColor: isActive ? optionTheme.accent + '40' : 'transparent',
       cursor: 'pointer',
       fontSize: '20px',
       display: 'flex',
@@ -78,7 +79,8 @@ export default function ThemeSelector({ currentTheme, onThemeChange }) {
       justifyContent: 'center',
       transition: 'all 0.2s ease',
       outline: 'none'
-    })
+      };
+    }
   };
 
   return (
@@ -87,9 +89,11 @@ export default function ThemeSelector({ currentTheme, onThemeChange }) {
         <button
           onClick={() => setIsOpen(!isOpen)}
           style={styles.toggleButton}
-          title={`Current theme: ${themes[currentTheme].name}`}
+          title={`Current theme: ${activeTheme.name}`}
+          aria-haspopup="true"
+          aria-expanded={isOpen}
         >
-          {themes[currentTheme].icon}
+          {activeTheme.icon}
         </button>
       </div>
       
@@ -100,7 +104,7 @@ export default function ThemeSelector({ currentTheme, onThemeChange }) {
               <button
                 key={themeKey}
                 onClick={() => {
-                  onThemeChange(themeKey);
+                  setTheme(themeKey);
                   setIsOpen(false);
                 }}
                 style={styles.button(themeKey)}

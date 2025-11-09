@@ -10,6 +10,7 @@ import {
   createProfile as createProfileUtil
 } from '../utils/storage';
 import { TransactionContext } from './transactionContext';
+import { formatLocalDate } from '../utils/dates';
 
 export function TransactionProvider({ children }) {
   const [data, setData] = useState(null);
@@ -156,7 +157,7 @@ export function TransactionProvider({ children }) {
 
     const newTransaction = {
       id: crypto.randomUUID(),
-      date: transaction.date || new Date().toISOString().split('T')[0],
+      date: transaction.date || formatLocalDate(new Date()),
       amount: parseFloat(transaction.amount),
       type: transaction.type || 'addition',
       note: transaction.note || '',

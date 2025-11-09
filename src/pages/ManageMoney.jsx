@@ -2,26 +2,31 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTransactions } from '../hooks/useTransactions';
 import { formatCurrency, getCurrentValue } from '../utils/calculations';
-import { themes, defaultTheme } from '../themes';
+import { formatLocalDate, parseLocalDate } from '../utils/dates';
 import ProfileSelector from '../components/ProfileSelector';
 import ProfileManager from '../components/ProfileManager';
+import { useTheme } from '../hooks/useTheme';
 
 export default function ManageMoney() {
   const navigate = useNavigate();
   const { config, transactions, addTransaction, deleteTransaction, exportData, currentProfile } = useTransactions();
-  const [currentTheme] = useState(() => {
-    const saved = localStorage.getItem('money-tracker-theme');
-    return saved || defaultTheme;
-  });
+  const { theme } = useTheme();
   const [showProfileManager, setShowProfileManager] = useState(false);
   const [amount, setAmount] = useState('');
   const [type, setType] = useState('addition');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(() => formatLocalDate(new Date()));
   const [note, setNote] = useState('');
-
-  const theme = themes[currentTheme];
-
   const quickAmounts = [5, 10, 20, 50, 100];
+
+  const formatTransactionDate = (dateString) => {
+    const parsedDate = parseLocalDate(dateString);
+    if (!parsedDate) return dateString;
+    return parsedDate.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
 
   // Calculate current balance
   const currentBalance = useMemo(() => {
@@ -57,7 +62,7 @@ export default function ManageMoney() {
     // Reset form
     setAmount('');
     setNote('');
-    setDate(new Date().toISOString().split('T')[0]);
+    setDate(formatLocalDate(new Date()));
   };
 
   const handleQuickAdd = (quickAmount) => {
@@ -234,7 +239,6 @@ export default function ManageMoney() {
             ← Back
           </button>
           <ProfileSelector
-            theme={theme}
             onManageClick={() => setShowProfileManager(true)}
           />
         </div>
@@ -332,11 +336,7 @@ export default function ManageMoney() {
                   {tx.type === 'addition' ? '+' : '-'}{formatCurrency(Math.abs(tx.amount))}
                 </div>
                 <div style={styles.transactionDate}>
-                  {new Date(tx.date).toLocaleDateString('en-US', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                  })}
+                  {formatTransactionDate(tx.date)}
                   {tx.note && ` • ${tx.note}`}
                 </div>
               </div>
@@ -365,7 +365,6 @@ export default function ManageMoney() {
 
       {showProfileManager && (
         <ProfileManager
-          theme={theme}
           onClose={() => setShowProfileManager(false)}
         />
       )}

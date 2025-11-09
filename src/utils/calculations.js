@@ -1,3 +1,5 @@
+import { parseLocalDate, formatLocalDate, differenceInDays } from './dates';
+
 /**
  * Calculate compound interest for a given number of days
  * Formula: A = P(1 + r/n)^(nt)
@@ -26,12 +28,15 @@ export function calculateCompoundInterest(principal, annualRate, days) {
  */
 export function generateGrowthData(initialAmount, annualRate, startDate, days, transactions = []) {
   const data = [];
-  const start = new Date(startDate);
+  const start = parseLocalDate(startDate);
+  if (!start || !Number.isFinite(days)) {
+    return data;
+  }
   
   for (let i = 0; i <= days; i++) {
     const currentDate = new Date(start);
     currentDate.setDate(start.getDate() + i);
-    const currentDateStr = currentDate.toISOString().split('T')[0];
+    const currentDateStr = formatLocalDate(currentDate);
     
     // Calculate base amount from initial investment
     const baseAmount = calculateCompoundInterest(initialAmount, annualRate, i);
@@ -41,22 +46,28 @@ export function generateGrowthData(initialAmount, annualRate, startDate, days, t
     const transactionsOnThisDay = [];
     
     transactions.forEach(tx => {
-      const txDate = new Date(tx.date);
-      if (txDate <= currentDate) {
-        // Calculate days this transaction has been growing
-        const daysGrowing = Math.floor((currentDate - txDate) / (1000 * 60 * 60 * 24));
-        const txValue = calculateCompoundInterest(tx.amount, annualRate, daysGrowing);
-        
-        if (tx.type === 'addition') {
-          transactionAmount += txValue;
-        } else if (tx.type === 'withdrawal') {
-          transactionAmount -= txValue;
-        }
-        
-        // Mark if transaction happened on this exact day
-        if (tx.date === currentDateStr) {
-          transactionsOnThisDay.push(tx);
-        }
+      const txDateStr = tx.date;
+      const txDate = parseLocalDate(txDateStr);
+      if (!txDate || txDate > currentDate) {
+        return;
+      }
+
+      const daysGrowing = differenceInDays(txDateStr, currentDateStr);
+      if (Number.isNaN(daysGrowing) || daysGrowing < 0) {
+        return;
+      }
+
+      const txValue = calculateCompoundInterest(tx.amount, annualRate, daysGrowing);
+      
+      if (tx.type === 'addition') {
+        transactionAmount += txValue;
+      } else if (tx.type === 'withdrawal') {
+        transactionAmount -= txValue;
+      }
+      
+      // Mark if transaction happened on this exact day
+      if (tx.date === currentDateStr) {
+        transactionsOnThisDay.push(tx);
       }
     });
     
@@ -98,26 +109,33 @@ export function getDaysForRange(range) {
  * @returns {number} Current total value
  */
 export function getCurrentValue(initialAmount, annualRate, startDate, transactions = []) {
-  const start = new Date(startDate);
-  const now = new Date();
-  const daysPassed = Math.floor((now - start) / (1000 * 60 * 60 * 24));
-  
-  // Calculate base amount
+  const todayStr = formatLocalDate(new Date());
+  const start = parseLocalDate(startDate);
+  if (!start || !todayStr) {
+    return 0;
+  }
+
+  const daysPassed = Math.max(0, differenceInDays(startDate, todayStr));
   const baseAmount = calculateCompoundInterest(initialAmount, annualRate, daysPassed);
   
-  // Calculate contribution from transactions
   let transactionAmount = 0;
   transactions.forEach(tx => {
-    const txDate = new Date(tx.date);
-    if (txDate <= now) {
-      const daysGrowing = Math.floor((now - txDate) / (1000 * 60 * 60 * 24));
-      const txValue = calculateCompoundInterest(tx.amount, annualRate, daysGrowing);
-      
-      if (tx.type === 'addition') {
-        transactionAmount += txValue;
-      } else if (tx.type === 'withdrawal') {
-        transactionAmount -= txValue;
-      }
+    const txDateStr = tx.date;
+    const txDate = parseLocalDate(txDateStr);
+    if (!txDate) {
+      return;
+    }
+
+    const daysGrowing = differenceInDays(txDateStr, todayStr);
+    if (Number.isNaN(daysGrowing) || daysGrowing < 0) {
+      return;
+    }
+
+    const txValue = calculateCompoundInterest(tx.amount, annualRate, daysGrowing);
+    if (tx.type === 'addition') {
+      transactionAmount += txValue;
+    } else if (tx.type === 'withdrawal') {
+      transactionAmount -= txValue;
     }
   });
   

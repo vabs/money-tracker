@@ -66,7 +66,7 @@ With v2.0.0, each profile has its own configuration. Edit `public/transactions.j
 
 ### Environment Variables (Optional)
 
-You can still use environment variables for deployment settings:
+The only environment variable the app now reads is the base path for deployments such as GitHub Pages:
 
 ```env
 # Base path for GitHub Pages (only needed if deploying to a subdirectory)
@@ -75,7 +75,7 @@ VITE_BASE_PATH=/
 
 ### Default Values
 
-If no `transactions.json` file is found, the app creates a default profile:
+If no `transactions.json` file is found, the app creates a default profile so the UI can still render:
 - **Name**: "Default"
 - **Emoji**: 👤
 - **Initial Amount**: $1,000
@@ -297,9 +297,6 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          VITE_INITIAL_AMOUNT: 1000
-          VITE_ANNUAL_INTEREST_RATE: 7
-          VITE_START_DATE: 2024-01-01
           VITE_BASE_PATH: /money-tracker
         
       - name: Deploy

@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import { useTransactions } from '../hooks/useTransactions';
 import { getCurrentValue, formatCurrency } from '../utils/calculations';
+import { formatLocalDate } from '../utils/dates';
+import { useTheme } from '../hooks/useTheme';
 
-export default function ProfileManager({ theme, onClose }) {
+export default function ProfileManager({ onClose }) {
+  const { theme } = useTheme();
   const { profiles, currentProfile, addProfile, updateProfile, deleteProfile } = useTransactions();
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -11,7 +14,7 @@ export default function ProfileManager({ theme, onClose }) {
     emoji: '👤',
     initialAmount: '1000',
     annualInterestRate: '7',
-    startDate: new Date().toISOString().split('T')[0]
+    startDate: formatLocalDate(new Date())
   });
 
   const profileList = Object.values(profiles);
@@ -57,7 +60,7 @@ export default function ProfileManager({ theme, onClose }) {
       emoji: '👤',
       initialAmount: '1000',
       annualInterestRate: '7',
-      startDate: new Date().toISOString().split('T')[0]
+      startDate: formatLocalDate(new Date())
     });
   };
 
@@ -95,7 +98,7 @@ export default function ProfileManager({ theme, onClose }) {
       emoji: '👤',
       initialAmount: '1000',
       annualInterestRate: '7',
-      startDate: new Date().toISOString().split('T')[0]
+      startDate: formatLocalDate(new Date())
     });
   };
 

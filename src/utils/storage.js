@@ -1,3 +1,5 @@
+import { formatLocalDate } from './dates';
+
 const STORAGE_KEY = 'money-tracker-v2';
 
 /**
@@ -66,7 +68,7 @@ export async function fetchBaselineData() {
           config: {
             initialAmount: 1000,
             annualInterestRate: 7,
-            startDate: new Date(new Date().setFullYear(new Date().getFullYear() - 1)).toISOString().split('T')[0]
+            startDate: formatLocalDate(new Date(new Date().setFullYear(new Date().getFullYear() - 1)))
           },
           transactions: [],
           createdAt: new Date().toISOString(),
@@ -119,7 +121,7 @@ export function createProfile(name, emoji, config) {
     config: {
       initialAmount: config.initialAmount || 1000,
       annualInterestRate: config.annualInterestRate || 7,
-      startDate: config.startDate || new Date().toISOString().split('T')[0]
+      startDate: config.startDate || formatLocalDate(new Date())
     },
     transactions: [],
     createdAt: new Date().toISOString(),

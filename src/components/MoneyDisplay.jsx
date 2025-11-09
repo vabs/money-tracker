@@ -1,6 +1,8 @@
 import { formatCurrency } from '../utils/calculations';
+import { useTheme } from '../hooks/useTheme';
 
-export default function MoneyDisplay({ amount, interestRate, theme, onGraphClick }) {
+export default function MoneyDisplay({ amount, interestRate, onGraphClick }) {
+  const { theme } = useTheme();
   const styles = {
     container: {
       display: 'flex',
