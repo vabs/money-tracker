@@ -1,22 +1,30 @@
 # 💰 Money Growth Tracker
 
-A beautiful, minimal web app that visualizes how money grows over time using compound interest. Built with React and Vite, designed to be deployed on GitHub Pages.
+An educational web app designed to teach kids about financial literacy, compound interest, and money management. This interactive tool helps children visualize how their money grows over time, understand interest rates, and track their earnings and expenses in a fun, engaging way.
 
 ## ✨ Features
 
-- **Multi-Profile Support**: Track money for multiple people (kids, family members) in one app
-- **Profile Management**: Create, edit, and switch between unlimited profiles with custom emojis
-- **Big Number Display**: Shows your current money value with the interest rate
-- **Interactive Growth Chart**: Visualize your money growth over different time periods (1M, 6M, 1Y, 5Y)
-- **Add/Withdraw Money**: Track additional contributions and withdrawals with compound growth
-- **Transaction History**: View and manage all your money transactions
+### Educational Benefits
+- **Learn Compound Interest**: Kids see firsthand how money grows over time with interest
+- **Track Earnings & Expenses**: Record allowances, chores, gifts, and purchases
+- **Visual Learning**: Interactive charts make financial concepts easy to understand
+- **Goal Setting**: Watch progress toward savings goals with real-time calculations
+- **Financial Responsibility**: Teaches the value of saving and smart spending
+
+### App Features
+- **Multi-Profile Support**: Track money for multiple kids in one app
+- **Profile Management**: Each child gets their own profile with custom emoji and color
+- **Big Number Display**: Shows current balance with the interest rate
+- **Interactive Growth Chart**: Visualize money growth over different time periods (1M, 6M, 1Y, 5Y)
+- **Add/Withdraw Money**: Track allowances, earnings, and spending with compound growth
+- **Transaction History**: View and manage all money transactions with notes
 - **Transaction Markers**: See visual indicators on the chart where transactions occurred
-- **6 Pastel Themes**: Switch between beautiful pastel color themes with icon-based selection
-- **Export/Import**: Download your transaction data and sync across deployments
-- **localStorage Persistence**: Your changes persist across browser sessions
-- **Independent Configurations**: Each profile has its own initial amount, interest rate, and start date
+- **6 Pastel Themes**: Kid-friendly color themes with icon-based selection
+- **Export/Import**: Download transaction data and sync across devices
+- **localStorage Persistence**: All changes persist across browser sessions
+- **Independent Configurations**: Each child has their own initial amount, interest rate, and start date
 - **Static & Fast**: No backend required, perfect for GitHub Pages
-- **Responsive**: Works beautifully on desktop and mobile
+- **Responsive**: Works beautifully on desktop, tablet, and mobile
 
 ## 🚀 Quick Start
 
